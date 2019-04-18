@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="testStyle.css">
+    <script type="text/javascript" src="./dist/vue.js"></script>
+    <title>test-calculator</title>
+</head>
+<body>    
+  <div id="calculator">
+    <input-box v-bind:input-show="inputShow">
+    </input-box>
+      <btn-list>    <!-- the pprogram is weird here, css won't fully work unless all done-->
+        <div @click=" clearValue()" class=" btn-30 btn-radius color-red clear-marginleft">C</div>
+        <div @click=" posiNeg() " class=" btn-30 btn-radius color-blue">+/-</div>
+        <div @click=" processInput('%')" class=" btn-30 btn-radius color-blue">%</div>
+        <div @click=" calcFact()" class=" btn-30 btn-radius color-blue">!</div>
+        <div @click=" deleteOneChar()" class=" btn-40 btn-radius color-red font-14">back</div>
+        <div @click=" processInput('7')" class=" btn-30 btn-radius ">7</div>
+        <div @click=" processInput('8')" class=" btn-30 btn-radius">8</div>
+        <div @click=" processInput('9')" class=" btn-30 btn-radius">9</div>
+        <div @click=" calcPower()" class=" btn-30 btn-radius clear-marginleft color-blue font-14">x^y</div>
+        <div @click=" calcSquare()" class=" btn-30 btn-radius color-blue font-12">X^2</div>
+        <div @click=" processInput('4')" class=" btn-30 btn-radius ">4</div>
+        <div @click=" processInput('5')" class=" btn-30 btn-radius">5</div>
+        <div @click=" processInput('6')" class=" btn-30 btn-radius">6</div>
+        <div @click=" calcSqrt()" class=" btn-30 btn-radius clear-marginleft color-blue font-14">sqrt</div>
+        <div @click=" processInput('X')" class=" btn-30 btn-radius color-blue font-12">X</div>
+        <div @click=" processInput('1')" class=" btn-30 btn-radius ">1</div>
+        <div @click=" processInput('2')" class=" btn-30 btn-radius">2</div>
+        <div @click=" processInput('3')" class=" btn-30 btn-radius">3</div>
+        <div @click=" processInput('/')"class=" btn-30 btn-radius clear-marginleft color-blue font-14">/</div>
+        <div @click=" processInput('+')" class=" btn-30 btn-radius color-blue font-14">+</div>
+        <div @click=" processInput('-')" class=" btn-30 btn-radius ">-</div>
+        <div @click=" processInput('0')" class=" btn-70 btn-radius ">0</div>          
+        <div @click=" processInput('.')" class=" btn-30 btn-radius clear-marginleft">.</div>
+        <div @click=" logFunct()" class=" btn-30 btn-radius ">log</div>
+        <div @click=" processInput('P')" class=" btn-30 btn-radius ">PI</div>
+        <div @click=" calResult()" class=" btn-70 btn-radius color-red font-14">=</div>
+    </btn-list>
+   </div>
+
+    
+    <script type="text/javascript">
+/*    
+this program is inspired by
+
+//i only did some slight modifications of the oirignal css file because there isn't a lot modification required
+https://www.jb51.net/article/143623.htm 
+
+i have added functions like log, powerfunction, factorial and pi and i modified the oirignal code's processinput to fix some minor bugs
+
+i have also left some original comments from the original author, most of them are in chinese, for my commnets, they are all in english
+ */ 
+ var calculator = new Vue({
+  el:'#calculator',
+  data:{
+    inputShow:{     //not sure why the inputShow here in the oringinal file number be uppercase, it will not work if put lower case, reserved words?
+      value:'0'
+    }
+  },
+  components:{
+    'input-box':{
+      props:['inputShow'],
+      computed: {
+        value:function () {     
+          return this.inputShow.value
+        }
+      },
+      template:'<input id="input-box" type="text" size="21" maxlength="21" v-model="value" readonly="readonly">'
+    },
+    'btn-list':{
+      template:'<div id="btn-list"><slot></slot></div>'
+    }
+  },
+  methods:{     //the version is kind of differetn from the original one, the current version must put "function" word to emphasis it is function
+    processInput: function(param){
+      if(param ==='P'){
+         param = Math.PI;    
+      }
+      //Object.prototype.toString.call according to js, it is checking the original datatype
+      if(Object.prototype.toString.call(this.inputShow.value) == "[object Number]"){   //判断输入框内容是否为数字类型
+        this.inputShow.value = "0";   //clear the value if the original number still exist
+      }//the recently put param shouldn't have any types assigned,if the param have type, it must be the old data
+      var myString = ''+this.inputShow.value;
+      var strLen = myString.length;
+      var arr = ["+","-","X","/"];
+      
+      var num = (''+parseFloat(myString.split('').reverse().join(''))).split('').reverse().join('');
+      var numLength = num.length;
+      
+      if(arr.indexOf(myString.charAt(strLen-1)) != -1 && arr.indexOf(param) != -1){    //若一开始输入内容为运算符,输入无效
+          return;         //means can't be two operands next to each other
+      }
+      else{
+        if((num!= '0' && param != '.')|| (param == '.'&& num.indexOf(".")==-1)){   //输入框内最后一串数字不为0时拼接字符串
+           this.inputShow.value += param;   //the normal input case
+        } else{    //之前检查过，如果num已经有".",那么检查现在的param，不可以重复出现"."
+           arr.push("%");    //adding % if already have the dot
+           if(param == '.'){      //若num中已有小数点,输入内容为小数点,视为无效
+              return;
+           }else if(!(arr.indexOf(param) != -1)){    //checking if the last param is symbols or not
+             //this.inputShow.value += param;  
+             if(myString.indexOf(".")==-1)
+              this.inputShow.value =myString.substring(0,myString.length-numLength) + param;
+             else              
+               this.inputShow.value =myString + param;
+           }
+        }
+      }
+    },
+    clearValue: function(){
+      this.inputShow.value = 0;   
+    },
+    
+    logFunct: function(){
+      var val = this.inputShow.value;
+      var num = (''+parseFloat(val.split('').reverse().join(''))).split('').reverse().join('');
+      if(isNaN( parseFloat( val.charAt( val.length-1 ))) ||  num <= 0){
+          alert("invalid input");
+          this.inputShow.value = 0;
+          return;
+      }
+      this.inputShow.value = Math.log(num)
+    },
+
+    deleteOneChar: function(){
+      var str = this.inputShow.value;
+      if(str.length== 1 || str.length== 0 ){
+        this.inputShow.value = 0;
+      }
+      else{
+        this.inputShow.value = str.substring(0, str.length-1);
+      }
+    },
+
+    calResult: function(){
+      var str = this.inputShow.value;
+      str = str.replace('X','*').replace('%','*0.01');
+      try{
+        this.inputShow.value = eval(str);
+      }catch(error){
+        return;
+      }
+    },
+    
+    calcPower:function(){   //need to get y value and use inputshow.value to calculate
+      //need to temperarly clear out the value and ask user to input y value again, then do the calculation
+      //do a log function after this one is done
+      var existingVal = this.inputShow.value;
+      var num = (''+parseFloat(existingVal.split('').reverse().join(''))).split('').reverse().join('');
+      var numLen = num.length;
+      if( isNaN( parseFloat( existingVal.charAt( existingVal.length-1 ))) ||  num==0 ){ //only check if the ending has symbols
+          alert("invalid input");
+          this.inputShow.value = 0;
+          return;
+      }
+      var powerInput = prompt("please enter the power number(ex: 2)","");
+      var reg = /^[1-9]+[0-9]*]*$/; 
+      if(!reg.test(powerInput) ){
+        alert("invalid input");
+        this.inputShow.value = 0;  //set the input back to 0
+        return;
+      }
+      var powerNum = (''+parseFloat(powerInput.split('').reverse().join(''))).split('').reverse().join('');
+      var result = Math.pow(num,powerNum);
+      this.inputShow.value=result;
+    },
+
+    calcFact: function(){  //need to get the previous result first, then do the looping factorial
+      //same things go here, doesn't need to calculate the result first
+      var val = this.inputShow.value;
+      var result = 1;
+      for(var i =val; i>0; i--){
+        result = result*i;
+      }
+      this.inputShow.value = result; //change the ending result into factorial
+    },
+
+    calcSqrt: function(){
+      var val = this.inputShow.value;
+      var reg = /^[1-9]+[0-9]*]*$/;
+      if(!reg.test(val)){
+        alert("invalide input");
+        return;
+      }
+      this.inputShow.value = Math.sqrt( eval(val) );
+    },
+
+    calcSquare: function(){   //do i need to consider the previous result first?
+      //strangly, it doesn't require calculating result first, then do the square calculation, think abt why
+      var str = this.inputShow.value;
+      this.inputShow.value = Math.pow(eval(str),2);
+    },
+    posiNeg: function(){    
+    //then we can change the sign, if it is neg, we use abs. if it is positive, we use neg sign
+    //can only do this when the old or the new input value exist, can't coexist
+      var existingVal = this.inputShow.value;
+      var num = (''+parseFloat(existingVal.split('').reverse().join(''))).split('').reverse().join('');
+      var numLen = num.length;
+
+      if(!isNaN( parseFloat( existingVal.charAt( existingVal.length-1 ))) &&  num!=0 ){
+        //only checking the end of the inputshow.value is fine
+        this.inputShow.value= '(-${num})';
+      }
+      else if( num == 0){
+        this.inputShow.value= 0;
+      }
+      else{
+        alert("input error, please check your input");
+      }
+    }
+
+  }
+ })
+
+    </script>
+
+</body>
+</html>
